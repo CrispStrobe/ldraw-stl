@@ -81,9 +81,19 @@ try {
     await page.click('[role=tab][data-tab=minifig]');
     await waitDims(/24\.9 × 16\.1 × 41\.9 mm/);
     assert.match(await page.locator('#status').textContent(), /10\/10 parts closed/);
+    // opening a slot lists every part of that kind; typing narrows it
+    await page.click('#slot-head + .combo-toggle');
+    await page.waitForSelector('#slot-head-pop:not([hidden])');
+    const heads = await page.locator('#slot-head-list li').count();
+    assert.ok(heads > 400, `head slot lists ${heads} heads`);
+    assert.match(await page.locator('#slot-head-pop .popup-count').textContent(), new RegExp(`^${heads} parts fit here`));
+    const titles = await page.locator('#slot-head-list li .title').allTextContents();
+    assert.ok(titles.every((x) => /^Minifig Head\b/.test(x)), 'only heads in the head slot');
+    assert.equal(await page.locator('#slot-head-list li[aria-selected=true] .num').textContent(), '3626cp01', 'opens at the current head');
+    await page.keyboard.press('Escape');
     await page.click('#slot-headwear');
     await page.fill('#slot-headwear', 'hair male');
-    await page.waitForSelector('#slot-headwear-list li');
+    await page.waitForFunction(() => /parts match/.test(document.querySelector('#slot-headwear-pop .popup-count').textContent));
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => /3901/.test(location.hash), null, { timeout: 10000 });

@@ -94,47 +94,77 @@ function choosePart(name) {
   schedule();
 }
 
-// A text field with a pop-up list of catalog matches (minifig slots).
-function picker(input, list, filter, onPick) {
+// A text field with a pop-up list of the catalog parts that fit one minifig slot. Opening it
+// (focus or the ▾ button) lists every part of that kind; typing narrows the list.
+function picker(input, filter, onPick, current) {
+  const id = input.id;
+  const pop = $(`#${id}-pop`);
+  const list = $(`#${id}-list`);
+  const count = pop.querySelector('.popup-count');
+  const toggle = input.parentElement.querySelector('.combo-toggle');
+  const total = state.catalog.search('', { filter, limit: 0 }).total;
   let items = [];
   let active = -1;
+  let query = '';
+  const open = (on) => {
+    pop.hidden = !on;
+    input.setAttribute('aria-expanded', String(on));
+  };
   const render = () => {
-    items = state.catalog.search(input.value, { filter, limit: 40 }).results;
+    const found = state.catalog.search(query, { filter, limit: 1000 });
+    items = found.results;
+    count.textContent = query.trim()
+      ? t('minifig.matches', { n: found.total.toLocaleString(language()), total: total.toLocaleString(language()) })
+      : t('minifig.count', { n: total.toLocaleString(language()) });
     list.replaceChildren(...items.map((p, i) => {
       const li = document.createElement('li');
       li.role = 'option';
-      li.id = `${list.id}-${i}`;
+      li.id = `${id}-opt-${i}`;
       li.setAttribute('aria-selected', String(i === active));
       li.innerHTML = '<span class="num"></span><span class="title"></span>';
       li.querySelector('.num').textContent = p.name;
       li.querySelector('.title').textContent = p.title;
+      li.title = p.keywords ? `${p.title} (${p.keywords})` : p.title;
       li.addEventListener('mousedown', (e) => { e.preventDefault(); pick(i); });
       return li;
     }));
-    list.hidden = !items.length;
-    input.setAttribute('aria-expanded', String(!list.hidden));
+    open(true);
   };
   const pick = (i) => {
     const p = items[i];
     if (!p) return;
     input.value = `${p.name} ${p.title}`;
-    list.hidden = true;
-    input.setAttribute('aria-expanded', 'false');
+    open(false);
     onPick(p.name);
   };
-  input.addEventListener('focus', () => { input.select(); active = -1; render(); });
-  input.addEventListener('input', () => { active = -1; render(); });
-  input.addEventListener('blur', () => { list.hidden = true; input.setAttribute('aria-expanded', 'false'); });
+  // browsing starts at the part the slot holds now
+  const browse = () => {
+    query = '';
+    active = -1;
+    render();
+    active = items.findIndex((p) => p.name === current());
+    [...list.children].forEach((li, i) => li.setAttribute('aria-selected', String(i === active)));
+    if (active >= 0) list.children[active].scrollIntoView({ block: 'center' });
+    else list.scrollTop = 0;
+  };
+  input.addEventListener('focus', () => { input.select(); browse(); });
+  input.addEventListener('input', () => { query = input.value; active = -1; render(); });
+  input.addEventListener('blur', () => open(false));
+  toggle.addEventListener('mousedown', (e) => e.preventDefault()); // keep the focus in the field
+  toggle.addEventListener('click', () => {
+    if (!pop.hidden) { open(false); return; }
+    if (document.activeElement === input) browse(); else input.focus();
+  });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      if (list.hidden) render();
+      if (pop.hidden) render();
       active = Math.max(0, Math.min(items.length - 1, active + (e.key === 'ArrowDown' ? 1 : -1)));
       [...list.children].forEach((li, i) => li.setAttribute('aria-selected', String(i === active)));
       list.children[active]?.scrollIntoView({ block: 'nearest' });
-      input.setAttribute('aria-activedescendant', `${list.id}-${active}`);
+      input.setAttribute('aria-activedescendant', `${id}-opt-${active}`);
     } else if (e.key === 'Enter') { e.preventDefault(); pick(Math.max(0, active)); }
-    else if (e.key === 'Escape') { list.hidden = true; }
+    else if (e.key === 'Escape') { open(false); }
   });
 }
 
@@ -401,7 +431,7 @@ async function start() {
     const input = $(`#slot-${s.key}`);
     const p = state.catalog.get(state.minifig[s.key] || '');
     input.value = p ? `${p.name} ${p.title}` : '';
-    picker(input, $(`#slot-${s.key}-list`), s.filter, (name) => { state.minifig[s.key] = name; setHash(); schedule(); });
+    picker(input, s.filter, (name) => { state.minifig[s.key] = name; setHash(); schedule(); }, () => state.minifig[s.key]);
     input.addEventListener('change', () => { if (!input.value.trim()) { state.minifig[s.key] = ''; setHash(); schedule(); } });
     const sel = $(`#slot-${s.key}-colour`);
     colourOptions(sel, state.minifigColours[s.key]);

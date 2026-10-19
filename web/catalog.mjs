@@ -45,7 +45,8 @@ export class Catalog {
       if (!ok) continue;
       out.push([score - p.title.length / 100, p]);
     }
-    out.sort((a, b) => b[0] - a[0] || a[1].name.localeCompare(b[1].name, undefined, { numeric: true }));
-    return { total: out.length, results: out.slice(0, limit).map(([, p]) => p) };
+    if (words.length) out.sort((a, b) => b[0] - a[0] || a[1].name.localeCompare(b[1].name, undefined, { numeric: true }));
+    else out.sort((a, b) => a[1].title.localeCompare(b[1].title, undefined, { numeric: true })); // browsing: A to Z
+    return { total: out.length, results: limit ? out.slice(0, limit).map(([, p]) => p) : [] };
   }
 }
