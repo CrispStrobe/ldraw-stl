@@ -1,0 +1,6 @@
+node_modules/
+dist/
+out/
+*.credits.txt
+test-results/
+.DS_Store

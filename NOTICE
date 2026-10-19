@@ -1,0 +1,10 @@
+ldraw-stl
+Copyright (C) 2026 Christian Strobele
+
+This Source Code Form is subject to the terms of the Mozilla Public License,
+v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain
+one at https://mozilla.org/MPL/2.0/.
+
+Third-party components keep their own licences; see THIRD-PARTY-NOTICES.md.
+Meshes made from the LDraw.org Parts Library are adaptations of CC BY licensed
+files and carry their credits (see README.md, "Licences and attribution").

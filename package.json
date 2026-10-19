@@ -1,0 +1,37 @@
+{
+  "name": "ldraw-stl",
+  "version": "0.1.0",
+  "description": "Convert LDraw models and parts (minifigures, bricks) to printable STL and 3MF, and STL back to LDraw. CLI and web app.",
+  "license": "MPL-2.0",
+  "author": "Christian Strobele",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CrispStrobe/ldraw-stl.git"
+  },
+  "homepage": "https://crispstrobe.github.io/ldraw-stl/",
+  "type": "module",
+  "bin": {
+    "ldraw-stl": "src/cli.mjs"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "NOTICE",
+    "THIRD-PARTY-NOTICES.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "build:library": "node scripts/build-library.mjs",
+    "build:web": "node scripts/build-web.mjs",
+    "serve": "node scripts/serve.mjs dist",
+    "test:e2e": "node test/e2e/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.0",
+    "three": "0.170.0"
+  }
+}

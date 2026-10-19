@@ -1,0 +1,95 @@
+name: pages
+
+# Builds the web app with a fresh mirror of the LDraw.org Parts Library and publishes it to
+# GitHub Pages. Runs on every push to main, weekly (to pick up library updates) and on demand.
+# The site is only deployed when the tests and the browser smoke test pass.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  LDRAW_URL: https://library.ldraw.org/library/updates/complete.zip
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Which LDraw library is current
+        id: lib
+        run: |
+          headers=$(curl -sfI "$LDRAW_URL")
+          etag=$(printf '%s\n' "$headers" | grep -i '^etag:' | sed -E 's/.*"([^"]+)".*/\1/' | tr -d '\r')
+          modified=$(printf '%s\n' "$headers" | grep -i '^last-modified:' | cut -d' ' -f2- | tr -d '\r')
+          echo "etag=$etag" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u -d "$modified" +%F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ldraw
+          key: ldraw-complete-${{ steps.lib.outputs.etag }}
+      - name: Download the LDraw library
+        run: |
+          mkdir -p ~/.cache/ldraw
+          test -s ~/.cache/ldraw/complete.zip || curl -sfL -o ~/.cache/ldraw/complete.zip "$LDRAW_URL"
+          unzip -tq ~/.cache/ldraw/complete.zip
+          sha256sum ~/.cache/ldraw/complete.zip
+
+      - name: Tests
+        run: npm test
+        env:
+          LDRAW_LIB: ~/.cache/ldraw/complete.zip
+      - name: Build the library mirror and the site
+        run: |
+          node scripts/build-library.mjs ~/.cache/ldraw/complete.zip dist --source-date "${{ steps.lib.outputs.date }}" --source-url "$LDRAW_URL"
+          node scripts/build-web.mjs dist
+      - name: The site carries the app, the mirror and the licence texts
+        run: |
+          test -s dist/index.html
+          test -s dist/vendor/three/three.module.min.js
+          test -s dist/library/manifest.json
+          test -s dist/library/catalog.json
+          for f in CAreadme.txt CAlicense.txt CAlicense4.txt; do test -s "dist/library/$f"; done
+          test -s dist/licenses/three.js.MIT.txt
+          test -s dist/licenses/ldraw-stl.MPL-2.0.txt
+          test -s dist/THIRD-PARTY-NOTICES.txt
+          ! ls dist/library | grep -Ei 'mklist|\.exe$'
+          du -sh dist
+      - name: Browser smoke test
+        run: |
+          npx playwright install --with-deps chromium
+          node test/e2e/smoke.mjs dist
+          node test/e2e/smoke.mjs dist --no-ranges
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- an abstract block with a stud, drawn for ldraw-stl (MPL-2.0) -->
+  <path d="M8 26 32 14l24 12v22L32 60 8 48z" fill="#c8102e"/>
+  <path d="M8 26 32 38v22L8 48z" fill="#9c0c24"/>
+  <path d="M32 38 56 26v22L32 60z" fill="#e0263f"/>
+  <ellipse cx="32" cy="24" rx="9" ry="4.5" fill="#9c0c24"/>
+  <path d="M23 18v6a9 4.5 0 0 0 18 0v-6z" fill="#b30e29"/>
+  <ellipse cx="32" cy="18" rx="9" ry="4.5" fill="#f04a5f"/>
+</svg>

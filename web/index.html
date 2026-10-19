@@ -1,0 +1,130 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+     If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ldraw-stl</title>
+  <meta name="description" content="Convert LDraw parts and minifigures to printable STL and 3MF at 1:1 scale, in the browser.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+  </script>
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="icon.svg" alt="" width="32" height="32">
+      <div>
+        <h1>ldraw-stl</h1>
+        <p data-i18n="tagline"></p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="lib-status" class="lib-status" role="status"></span>
+      <select id="lang" aria-label="Language / Sprache">
+        <option value="en">EN</option>
+        <option value="de">DE</option>
+      </select>
+      <button id="about-btn" type="button" data-i18n="about.open"></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel source">
+      <div class="tabs" role="tablist">
+        <button role="tab" type="button" data-tab="part" data-i18n="tab.part"></button>
+        <button role="tab" type="button" data-tab="minifig" data-i18n="tab.minifig"></button>
+        <button role="tab" type="button" data-tab="file" data-i18n="tab.file"></button>
+      </div>
+
+      <section data-panel="part" class="tab-panel">
+        <label for="search" data-i18n="search.label"></label>
+        <input id="search" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="search.placeholder" aria-controls="results">
+        <div class="row">
+          <select id="category" data-i18n-label="search.category"></select>
+        </div>
+        <label class="check"><input id="hidden" type="checkbox"> <span data-i18n="search.hidden"></span></label>
+        <ul id="results" class="results" role="listbox" data-i18n-label="search.label"></ul>
+        <p id="result-count" class="muted small"></p>
+      </section>
+
+      <section data-panel="minifig" class="tab-panel" hidden>
+        <p class="muted small" data-i18n="minifig.hint"></p>
+        <div class="slot">
+          <label for="slot-headwear" data-i18n="minifig.headwear"></label>
+          <div class="combo"><input id="slot-headwear" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="slot-headwear-list" autocomplete="off" spellcheck="false"><ul id="slot-headwear-list" class="popup" role="listbox" hidden></ul></div>
+          <select id="slot-headwear-colour" class="swatch" data-i18n-label="opt.colour"></select>
+        </div>
+        <div class="slot">
+          <label for="slot-head" data-i18n="minifig.head"></label>
+          <div class="combo"><input id="slot-head" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="slot-head-list" autocomplete="off" spellcheck="false"><ul id="slot-head-list" class="popup" role="listbox" hidden></ul></div>
+          <select id="slot-head-colour" class="swatch" data-i18n-label="opt.colour"></select>
+        </div>
+        <div class="slot">
+          <label for="slot-torso" data-i18n="minifig.torso"></label>
+          <div class="combo"><input id="slot-torso" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="slot-torso-list" autocomplete="off" spellcheck="false"><ul id="slot-torso-list" class="popup" role="listbox" hidden></ul></div>
+          <select id="slot-torso-colour" class="swatch" data-i18n-label="opt.colour"></select>
+        </div>
+        <div class="slot">
+          <label for="slot-legs" data-i18n="minifig.legs"></label>
+          <div class="combo"><input id="slot-legs" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="slot-legs-list" autocomplete="off" spellcheck="false"><ul id="slot-legs-list" class="popup" role="listbox" hidden></ul></div>
+          <select id="slot-legs-colour" class="swatch" data-i18n-label="opt.colour"></select>
+        </div>
+      </section>
+
+      <section data-panel="file" class="tab-panel" hidden>
+        <label for="file-input" data-i18n="file.label"></label>
+        <input id="file-input" type="file" accept=".ldr,.mpd,.dat,.stl" multiple>
+        <p class="muted small" data-i18n="file.hint"></p>
+        <p id="file-report" class="small"></p>
+        <button id="dl-dat" type="button" class="primary" data-i18n="file.downloadDat" hidden></button>
+      </section>
+    </aside>
+
+    <section class="stage">
+      <h2 id="model-title" class="model-title"></h2>
+      <div id="viewer" class="viewer"></div>
+      <div class="readout">
+        <div id="dims" class="dims mono"></div>
+        <div id="status" class="status small" role="status"></div>
+      </div>
+    </section>
+
+    <aside class="panel output">
+      <div id="colour-row" class="field">
+        <label for="colour" data-i18n="opt.colour"></label>
+        <select id="colour" class="swatch"></select>
+      </div>
+      <div class="field">
+        <label for="scale" data-i18n="opt.scale"></label>
+        <input id="scale" type="number" min="0.1" max="20" step="0.1" value="1">
+      </div>
+      <label class="check"><input id="hires" type="checkbox"> <span data-i18n="opt.hires"></span></label>
+      <label class="check"><input id="repair" type="checkbox" checked> <span data-i18n="opt.repair"></span></label>
+
+      <h3 data-i18n="dl.heading"></h3>
+      <div id="downloads" class="downloads">
+        <button type="button" class="primary" data-kind="stl" data-i18n="dl.stl" disabled></button>
+        <button type="button" data-kind="3mf" data-i18n="dl.3mf" disabled></button>
+        <button type="button" data-kind="split" data-i18n="dl.split" disabled></button>
+        <button type="button" data-kind="stl-only" data-i18n="dl.stlOnly" disabled></button>
+        <button type="button" id="dl-ldr" data-kind="ldr" data-i18n="dl.ldr" disabled hidden></button>
+      </div>
+      <p class="muted small" data-i18n="dl.note"></p>
+      <details class="credits">
+        <summary id="credits-heading" data-i18n="credits.show"></summary>
+        <pre id="credits" class="small"></pre>
+      </details>
+    </aside>
+  </main>
+
+  <footer class="foot small muted">
+    <span>ldraw-stl · MPL-2.0 · parts: LDraw.org Parts Library, CC BY 4.0 / 2.0</span>
+    <span>LEGO® is a trademark of the LEGO Group, which does not sponsor or endorse this site.</span>
+  </footer>
+</body>
+</html>
