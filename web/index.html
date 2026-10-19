@@ -8,6 +8,11 @@
   <title>ldraw-stl</title>
   <meta name="description" content="Convert LDraw parts and minifigures to printable STL and 3MF at 1:1 scale, in the browser.">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#c8102e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ldraw-stl">
   <link rel="stylesheet" href="styles.css">
   <script type="importmap">
     { "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
@@ -29,6 +34,7 @@
         <option value="en">EN</option>
         <option value="de">DE</option>
       </select>
+      <button id="install-btn" type="button" data-i18n="pwa.install" hidden></button>
       <button id="about-btn" type="button" data-i18n="about.open"></button>
     </div>
   </header>
@@ -115,12 +121,26 @@
         <button type="button" id="dl-ldr" data-kind="ldr" data-i18n="dl.ldr" disabled hidden></button>
       </div>
       <p class="muted small" data-i18n="dl.note"></p>
+      <details id="offline" class="offline" hidden>
+        <summary data-i18n="pwa.offline"></summary>
+        <p id="offline-status" class="small muted" role="status"></p>
+        <progress id="offline-progress" max="1" value="0" hidden></progress>
+        <div class="downloads">
+          <button id="offline-get" type="button" data-i18n="pwa.getAll"></button>
+          <button id="offline-drop" type="button" data-i18n="pwa.dropAll" hidden></button>
+        </div>
+      </details>
       <details class="credits">
         <summary id="credits-heading" data-i18n="credits.show"></summary>
         <pre id="credits" class="small"></pre>
       </details>
     </aside>
   </main>
+
+  <div id="update" class="toast" role="status" hidden>
+    <span data-i18n="pwa.update"></span>
+    <button id="update-btn" type="button" class="primary" data-i18n="pwa.reload"></button>
+  </div>
 
   <footer class="foot small muted">
     <span>ldraw-stl · MPL-2.0 · parts: LDraw.org Parts Library, CC BY 4.0 / 2.0</span>

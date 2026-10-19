@@ -9,6 +9,21 @@ build a minifigure from headwear, head, torso and legs, or open your own `.ldr`/
 Studio or LeoCAD. Preview in 3D, then download STL, a coloured 3MF, or one STL per colour.
 Everything runs in your browser; your files are never uploaded.
 
+### Install it as an app (PWA)
+
+The web app is a progressive web app. Install it from the browser (the **Install app** button
+appears in Chrome and Edge; in Safari use *Share → Add to Home Screen* or *File → Add to Dock*)
+and it opens in its own window, also offline:
+
+- The app itself is stored on install and updated only when you click **Reload** on the
+  "new version" notice, never in the middle of your work.
+- Every library file a model uses is kept on the device, so the parts and figures you have
+  already opened also convert offline.
+- **Offline use → Store the whole library** keeps all of the LDraw library (about 100 MB) on the
+  device, so every part works offline. **Remove the stored library** frees the space.
+- On desktop Chrome and Edge, the installed app can open `.stl`, `.ldr`, `.mpd` and `.dat` files
+  from the file manager (*Open with → ldraw-stl*).
+
 ## What you get
 
 - **Closed solids.** LDraw geometry is a surface model full of T-junctions and studs that sit

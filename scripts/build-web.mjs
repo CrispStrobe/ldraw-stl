@@ -40,8 +40,26 @@ fs.writeFileSync(path.join(dist, 'version.json'), JSON.stringify({
 }, null, 2));
 fs.writeFileSync(path.join(dist, '.nojekyll'), '');
 
+// Service worker: precache every file of the app shell (not the library, which is cached as it is
+// used). The version changes with every build, so a deploy installs a fresh shell.
+const shell = ['./'];
+const walk = (dir) => {
+  for (const e of fs.readdirSync(path.join(dist, dir), { withFileTypes: true })) {
+    const rel = dir ? `${dir}/${e.name}` : e.name;
+    if (e.isDirectory()) { if (rel !== 'library') walk(rel); }
+    else if (!['sw.js', '.nojekyll'].includes(rel)) shell.push(rel);
+  }
+};
+walk('');
+shell.push('library/CAreadme.txt', 'library/CAlicense.txt', 'library/CAlicense4.txt');
+const swVersion = `${pkg.version}-${(process.env.GITHUB_SHA ?? 'dev').slice(0, 7)}-${Date.now().toString(36)}`;
+const sw = fs.readFileSync(path.join(dist, 'sw.js'), 'utf8')
+  .replace("'__VERSION__'", JSON.stringify(swVersion))
+  .replace('__SHELL__', JSON.stringify(shell.sort()));
+fs.writeFileSync(path.join(dist, 'sw.js'), sw);
+
 // The page must only use relative URLs (it is served from /ldraw-stl/ on GitHub Pages).
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 if (/(src|href)="\//.test(html)) throw new Error('index.html contains a root-relative URL');
 if (threePkg.version !== pkg.devDependencies.three) throw new Error(`three ${threePkg.version} installed, ${pkg.devDependencies.three} pinned`);
-console.log(`web: ${dist} (three ${threePkg.version}, commit ${process.env.GITHUB_SHA ?? 'dev'})`);
+console.log(`web: ${dist} (three ${threePkg.version}, commit ${process.env.GITHUB_SHA ?? 'dev'}, ${shell.length} files precached)`);

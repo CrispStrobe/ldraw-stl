@@ -102,6 +102,10 @@ select.swatch { border-left: 14px solid var(--swatch, #a0a5a9); }
 .field label { margin-top: 0; }
 .field + .field { margin-top: 10px; }
 .downloads { display: flex; flex-direction: column; gap: 6px; }
+.offline summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; margin-top: 14px; }
+.offline progress { width: 100%; }
+.offline .downloads { margin-top: 6px; }
+.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.2); }
 .credits summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; margin-top: 10px; }
 .credits pre { white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; background: var(--surface-2); padding: 8px; border-radius: var(--radius); }
 

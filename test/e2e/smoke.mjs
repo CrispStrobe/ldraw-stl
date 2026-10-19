@@ -137,6 +137,39 @@ try {
     assert.equal(await page.locator('[data-tab=minifig]').textContent(), 'Minifigur');
     await page.selectOption('#lang', 'en');
   });
+  await step('installable: manifest, icons, service worker', async () => {
+    const manifest = await (await page.request.get(`http://localhost:${port}/manifest.webmanifest`)).json();
+    for (const k of ['name', 'short_name', 'start_url', 'display', 'icons']) assert.ok(manifest[k], `manifest.${k}`);
+    assert.equal(manifest.display, 'standalone');
+    assert.ok(manifest.icons.some((i) => i.sizes === '512x512' && i.purpose === 'maskable'));
+    for (const icon of manifest.icons) assert.equal((await page.request.get(`http://localhost:${port}/${icon.src}`)).status(), 200, icon.src);
+    assert.ok(await page.evaluate(() => navigator.serviceWorker.ready.then((r) => !!r.active)));
+  });
+  await step('works offline with the models already used', async () => {
+    await page.click('[role=tab][data-tab=minifig]');
+    await waitDims(/41\.\d mm/);
+    const hash = await page.evaluate(() => location.hash);
+    await context.setOffline(true);
+    try {
+      await page.goto(`http://localhost:${port}/${hash}`);
+      await waitDims(/41\.\d mm/);
+      assert.match(await page.locator('#status').textContent(), /parts closed/);
+    } finally { await context.setOffline(false); }
+  });
+  await step('whole library stored for offline use', async () => {
+    await page.click('#offline summary');
+    await page.click('#offline-get');
+    await page.waitForFunction(() => /whole library/i.test(document.querySelector('#offline-status').textContent), null, { timeout: 180000 });
+    await context.setOffline(true);
+    try {
+      await page.goto(`http://localhost:${port}/#part=3005`); // never viewed in this session
+      await page.reload();
+      await waitDims(/8\.0 × 8\.0 × 11\.2 mm/);
+    } finally { await context.setOffline(false); }
+    await page.click('#offline summary');
+    await page.click('#offline-drop');
+    await page.waitForFunction(() => !/whole library/i.test(document.querySelector('#offline-status').textContent));
+  });
   await step('phone width has no horizontal scroll', async () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.click('[role=tab][data-tab=part]');

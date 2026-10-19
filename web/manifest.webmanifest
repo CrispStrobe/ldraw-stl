@@ -1,0 +1,27 @@
+{
+  "name": "ldraw-stl: LDraw to STL and 3MF",
+  "short_name": "ldraw-stl",
+  "description": "Turn LDraw parts and minifigures into watertight STL and coloured 3MF files for 3D printing, at 1:1 scale, and STL back into LDraw parts.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#c8102e",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "model/stl": [".stl"],
+        "application/x-ldraw": [".ldr", ".mpd", ".dat"]
+      }
+    }
+  ]
+}

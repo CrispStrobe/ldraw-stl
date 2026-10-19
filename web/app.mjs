@@ -6,6 +6,7 @@ import { Catalog } from './catalog.mjs';
 import { Viewer } from './viewer.mjs';
 import { t, setLanguage, language, number } from './i18n.mjs';
 import { openAbout } from './about.mjs';
+import { registerServiceWorker, installButton, offlinePanel, fileHandling } from './pwa.mjs';
 import { convert, toStl, toStlPerColour, to3mfEntries, VERSION } from './core/convert.mjs';
 import { createZip } from './core/zip.mjs';
 import { decodeStl } from './core/stl.mjs';
@@ -36,6 +37,7 @@ const SLOTS = [
 
 let version = { version: VERSION, commit: 'dev', builtAt: '' };
 let viewer;
+let refreshOffline = () => {};
 
 // ------------------------------------------------------------------ text
 
@@ -47,6 +49,7 @@ function applyTexts() {
   if (state.library) libraryStatus();
   if (state.catalog) { fillCategories(); renderResults(); }
   if (state.result) report(state.result);
+  refreshOffline();
 }
 
 function libraryStatus() {
@@ -221,6 +224,7 @@ async function run() {
     setStatus(err.message, true);
   } finally {
     clearInterval(tick);
+    refreshOffline();
   }
 }
 
@@ -349,6 +353,8 @@ function readHash() {
 
 async function start() {
   setLanguage(language());
+  registerServiceWorker();
+  installButton();
   readHash();
   viewer = new Viewer($('#viewer'));
   $('#lang').addEventListener('change', (e) => { setLanguage(e.target.value); applyTexts(); });
@@ -372,6 +378,8 @@ async function start() {
     return;
   }
   libraryStatus();
+  refreshOffline = offlinePanel(state.library);
+  fileHandling((files) => { setTab('file'); openFiles(files); });
   fillCategories();
   colourOptions($('#colour'), '4');
   $('#search').addEventListener('input', renderResults);
